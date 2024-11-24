@@ -10,6 +10,14 @@ from .models import proverka, poverka, kalibrovka, transportirovka, remont, Seri
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 import datetime
+
+
+from django.http import HttpResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.graphics.barcode.qr import QrCodeWidget
+from reportlab.graphics.shapes import Drawing
+
 def history_of_registration(request):
     if request.method == 'POST':
         record_id = request.POST.get('delete_id')
@@ -68,80 +76,6 @@ def modules (request):
 
 def index(request):
     return render(request,'main/index.html')
-
-# def status(request):
-#     # Получаем серийный номер из GET-запроса
-#     serial_number = request.GET.get('serial_number')
-#     module_info = None
-#     tasks2 = []
-#     tasks3 = []
-#     tasks4 = []
-#     tasks5 = []
-#     tasks6 = []
-#
-#     if serial_number:  # Проверяем, если серийный номер введен
-#         # Разбиваем серийный номер на части
-#         parts = serial_number.split(":")
-#         if len(parts) >= 6:
-#             try:
-#                 manufacturer_code = int(parts[1])
-#                 product_family_code = int(parts[2][:2])
-#                 product_type_code = int(parts[2][2:])
-#                 revision_code = int(parts[3])
-#                 production_date = int(parts[4])  # Неделя + год (3524)
-#                 module_number = int(parts[5])  # Номер изделия (00009)
-#
-#                 # Преобразование недели и года в формат "месяц.год"
-#                 year = 2000 + production_date % 100  # Последние две цифры - год
-#                 week = production_date // 100  # Первые две цифры - неделя
-#                 first_day_of_year = datetime.date(year, 1, 1)
-#                 first_week_start = first_day_of_year + datetime.timedelta(days=-first_day_of_year.weekday())
-#                 production_date_as_date = first_week_start + datetime.timedelta(weeks=week - 1)
-#                 production_date_formatted = production_date_as_date.strftime("%m.%Y")  # Формат "месяц.год"
-#
-#                 # Добавьте отладочные принты здесь
-#                 print("Parts:", parts)
-#                 print("Manufacturer code:", manufacturer_code)
-#                 print("Product family code:", product_family_code)
-#                 print("Product type code:", product_type_code)
-#                 print("Revision code:", revision_code)
-#                 print("Module info query:", info_modules.objects.filter(
-#                     info_manufacturer_code=manufacturer_code,
-#                     info_product_family_code=product_family_code,
-#                     info_product_type_code=product_type_code,
-#                     info_revision_code=revision_code
-#                 ))
-#
-#                 # Ищем соответствие в таблице info_modules
-#                 module_info = info_modules.objects.filter(
-#                     info_manufacturer_code=manufacturer_code,
-#                     info_product_family_code=product_family_code,
-#                     info_product_type_code=product_type_code,
-#                     info_revision_code=revision_code
-#                 ).first()
-#             except (ValueError, info_modules.DoesNotExist):
-#                 module_info = None
-#
-#         # Загружаем связанные данные для текущего серийного номера
-#         tasks2 = proverka.objects.filter(serial_number__combined_field=serial_number)
-#         tasks3 = poverka.objects.filter(serial_number__combined_field=serial_number)
-#         tasks4 = kalibrovka.objects.filter(serial_number__combined_field=serial_number)
-#         tasks5 = transportirovka.objects.filter(serial_number__combined_field=serial_number)
-#         tasks6 = remont.objects.filter(serial_number__combined_field=serial_number)
-#
-#     # Передаем данные в шаблон
-#     return render(request, 'main/status.html', {
-#         'title': 'Статус модуля',
-#         'module_info': module_info,
-#         'tasks2': tasks2,
-#         'tasks3': tasks3,
-#         'tasks4': tasks4,
-#         'tasks5': tasks5,
-#         'tasks6': tasks6,
-#         'production_date': production_date_formatted,
-#         'module_number': module_number,
-#         'serial_number': serial_number,  # Чтобы передать введенный серийный номер в шаблон
-#     })
 def status(request):
     # Получаем серийный номер из GET-запроса
     serial_number = request.GET.get('serial_number')
@@ -250,3 +184,45 @@ def user(request):
 
     return render(request, 'main/user.html')  # Отображение формы входа
 
+
+# Генерация файла
+def generate_pdf(request):
+    # Создаем HTTP-ответ с типом content-type для PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="label.pdf"'
+
+    # Создаем объект canvas для генерации PDF
+    p = canvas.Canvas(response, pagesize=letter)
+
+    # Устанавливаем начальные координаты для этикетки
+    start_x, start_y = 10, 750  # Верхний левый угол этикетки
+
+    # Добавляем первый QR-код
+    qr1 = QrCodeWidget("QR Code Content 1")
+    qr1_bounds = qr1.getBounds()
+    qr1_width = qr1_bounds[2] - qr1_bounds[0]
+    qr1_height = qr1_bounds[3] - qr1_bounds[1]
+    qr1_drawing = Drawing(60, 60)  # Размер QR-кода
+    qr1_drawing.add(qr1)
+    qr1_drawing.drawOn(p, start_x, start_y - 60)
+
+    # Добавляем текстовые элементы
+    text_x = start_x + 70  # Координата X для текста
+    p.setFont("Helvetica", 10)
+
+    # Текст справа от первого QR-кода
+    p.drawString(text_x, start_y, "KAC")
+    p.drawString(text_x, start_y - 15, "eЦ6.641.733")
+
+    # Текст ниже
+    p.drawString(start_x, start_y - 100, "pev.4")
+    p.drawString(start_x + 50, start_y - 100, "№00001")
+    p.drawString(start_x + 120, start_y - 100, "35/24")
+
+    # S/N текст
+    p.drawString(start_x, start_y - 115, "S/N 01:02:010203:01:3524:00009")
+
+    # Завершаем создание PDF
+    p.showPage()
+    p.save()
+    return response
