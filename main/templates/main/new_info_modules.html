@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+{% extends 'main/layout.html' %}
+
+{% block title %}
+    Регистрация несуществующего изделия
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Регистрация несуществующего изделия</h1>
+{% if messages %}
+    {% for message in messages %}
+        <p class="success">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+    <form method="post">
+        {% csrf_token %}
+            <script>
+document.addEventListener("DOMContentLoaded", function() {
+    const ecNumberInput = document.getElementById("info-ec-number");
+    if (ecNumberInput) {
+        ecNumberInput.addEventListener("input", function(e) {
+            let value = e.target.value.replace(/[^0-9]/g, ""); // Удаляем все нецифровые символы
+            let formattedValue = "еЦ";
+
+            // Формируем маску на основе длины введенных данных
+            if (value.length > 0) {
+                formattedValue += value.slice(0, 1) + '.'; // Первая цифра
+            }
+            if (value.length > 1) {
+                formattedValue += value.slice(1, 4) + '.'; // Следующие три цифры
+            }
+            if (value.length > 4) {
+                formattedValue += value.slice(4, 7); // Еще три цифры
+            }
+            if (value.length > 7) {
+                formattedValue += '-' + value.slice(7, 9); // Последние две цифры (обязательная часть)
+            }
+
+            e.target.value = formattedValue;
+        });
+
+        ecNumberInput.addEventListener("blur", function(e) {
+            let value = e.target.value;
+
+            // Проверка на корректность формата
+            const regex = /^еЦ\d\.\d{3}\.\d{3}(-\d{2})?$/;
+            if (!regex.test(value)) {
+                alert("Некорректный формат номера. Проверьте ввод.");
+                e.target.value = ''; // Очистка поля, если формат неверный
+            }
+        });
+    }
+});
+</script>
+
+
+        <div>
+            <label for="info-ec-number">Номер еЦ:</label>
+            {{ form.info_ec_number }}
+        </div>
+        <div>
+            <label for="info-product-family">Семейство продукта:</label>
+            {{ form.info_product_family }}
+        </div>
+        <div>
+            <label for="info-product-family-code">Код семейства продукта:</label>
+            {{ form.info_product_family_code }}
+        </div>
+        <div>
+            <label for="info-revision">Ревизия:</label>
+            {{ form.info_revision }}
+        </div>
+        <div>
+            <label for="info-revision-code">Код ревизии:</label>
+            {{ form.info_revision_code }}
+        </div>
+        <div>
+            <label for="info-product-type">Тип продукта:</label>
+            {{ form.info_product_type }}
+        </div>
+        <div>
+            <label for="info-product-type-code">Код типа продукта:</label>
+            {{ form.info_product_type_code }}
+        </div>
+        <div>
+            <label for="info-manufacturer">Производитель:</label>
+            {{ form.info_manufacturer }}
+        </div>
+        <div>
+            <label for="info-manufacturer-code">Код производителя:</label>
+            {{ form.info_manufacturer_code }}
+        </div>
+        <input type="submit" value="Отправить" class="submit-button">
+   <style>
+       .submit-button {
+           margin-right: 300px; /* Отступ справа */
+       }
+   </style>
+        <a href="{% url 'modules' %}">Назад</a>
+    </form>
+</div>
+{% endblock %}

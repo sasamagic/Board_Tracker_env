@@ -1,0 +1,353 @@
+.delete-button {
+    background: none; /* Убирает фон */
+    border: none; /* Убирает рамку */
+    color: red; /* Задает красный цвет крестика */
+    font-size: 30px; /* Размер крестика */
+    outline: none; /* Убирает обводку при фокусе */
+    padding: 0; /* Убирает внутренние отступы */
+    margin: 0; /* Убирает внешние отступы */
+}
+
+
+.delete-button:hover {
+    color: darkred; /* Более темный оттенок при наведении */
+}
+
+.record-list {
+    list-style-type: none; /* Убирает маркеры у списка */
+    padding: 0; /* Убирает отступы */
+}
+
+.record-item {
+    border-bottom: 1px solid #ddd; /* Разделяет элементы строками */
+    padding: 10px; /* Добавляет отступ внутри строки */
+    display: flex; /* Позволяет выравнивать элементы по горизонтали */
+    justify-content: space-between; /* Размещает контент с пробелами */
+    align-items: center; /* Центрирует элементы по вертикали */
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Стили для сайдбара */
+aside {
+    background: #0d3b66;
+    width: 300px; /* Ширина сайдбара */
+    padding: 20px;
+    color: #fff;
+    height: 100%;
+    position: fixed; /* Фиксированное позиционирование */
+    top: 0;
+    left: 0;
+    transform: translateX(-100%); /* Скрываем сайдбар по умолчанию */
+    transition: transform 0.3s ease; /* Плавный переход при открытии/закрытии */
+}
+
+/* Стиль для видимого сайдбара */
+aside.show {
+    transform: translateX(0); /* Показать сайдбар */
+}
+
+/* Кнопка для открытия сайдбара внутри сайдбара */
+.sidebar-toggle {
+    position: absolute;
+    top: 330px; /* Отступ сверху */
+    right: -30px; /* Расположение кнопки за пределами сайдбара */
+    background: #0d3b66; /* Цвет кнопки */
+    color: white;
+    border: none;
+    border-radius: 12px; /* Кнопка круглой формы */
+    width: 40px; /* Ширина кнопки */
+    height: 50px; /* Высота кнопки */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1000;
+    transition: background 0.3s ease;
+}
+
+/* Иконка стрелки */
+.sidebar-toggle i {
+    font-size: 18px;
+}
+
+/* Изменение фона кнопки при наведении */
+.sidebar-toggle:hover {
+    background: #0056b3;
+}
+
+/* Основные стили для основного контента */
+main {
+    margin-left: 0; /* Начальный отступ для скрытого сайдбара */
+    padding: 15px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    transition: margin-left 0.3s ease; /* Плавный переход при изменении отступа */
+}
+
+/* Стиль для основного контента при открытом сайдбаре */
+main.shift {
+    margin-left: 300px; /* Отступ для отображения основного контента при открытом сайдбаре */
+}
+
+/* Стили для иконок в сайдбаре */
+aside ul li i {
+    margin-right: 10px;
+}
+
+/* Стиль для заголовков и текста в сайдбаре */
+aside img {
+    width: 50px;
+    margin-left: -10px;
+    margin-top: 50px; /* Отступ сверху */
+}
+
+aside .logo {
+    font-size: 34px;
+    margin-left: 50px;
+    font-weight: bold;
+    position: relative;
+    top: -50px;
+}
+
+aside h3 {
+    margin-top: 45px;
+    font-size: 25px;
+}
+
+aside ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+aside ul li {
+    margin-top: 20px;
+}
+.icon-white {
+    color: white; /* Сделать иконку белой */
+}
+.no-bullet {
+    list-style: none; /* Убирает точку перед элементом списка */
+    padding-left: 0; /* Убирает отступ слева, если нужно */
+}
+
+
+aside ul li, aside ul a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s, transform 0.3s;
+}
+
+aside ul li:hover, aside ul a:hover {
+    color: #0056b3;
+    transform: scale(1.05);
+}
+
+/* Центрирование текста */
+.center-text {
+    text-align: center;
+    /*margin-top: 20px; !* Можно настроить отступ сверху *!*/
+    /*margin-bottom: 20px; !* Можно настроить отступ снизу *!*/
+}
+
+.form_auth_block {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.form_auth_block_content {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    text-align: center;
+}
+
+.form_auth_style {
+    display: flex;
+    flex-direction: column;
+}
+
+.form_auth_style input {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form_auth_button {
+    padding: 10px;
+    background-color: #0d3b66; /* Синий цвет */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.form_auth_button:hover {
+    background-color: #0056b3; /* Темно-синий при наведении */
+}
+
+/* Основные стили для формы */
+.form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100%;
+    /*padding: 20px;*/
+}
+
+form {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px; /* Ограничение ширины формы */
+    box-sizing: border-box;
+}
+
+form label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.header .logo {
+    font-size: 24px; /* Размер шрифта */
+    font-weight: bold; /* Жирное начертание */
+    color: white; /* Цвет текста */
+    text-decoration: none; /* Убираем подчеркивание */
+}
+
+.header a {
+    text-decoration: none; /* Убираем подчеркивание у ссылки */
+}
+
+form select,
+form input[type="number"],
+form input[type="date"],
+form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-bottom: 15px; /* Отступ снизу для элементов формы */
+}
+
+form textarea {
+    height: 100px; /* Высота текстовой области */
+    resize: vertical; /* Позволяет изменять размер только по вертикали */
+}
+
+.submit-button {
+    padding: 10px;
+    background-color: #0d3b66; /* Синий цвет кнопки */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 16px;
+}
+
+.submit-button:hover {
+    background-color: #0056b3; /* Темно-синий цвет при наведении */
+}
+
+/* Стили для верхней ленты */
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #0d3b66;
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000; /* Убедитесь, что лента отображается поверх других элементов */
+}
+
+.header .logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.header {
+  justify-content: space-between; /* Разместить элементы по краям */
+  align-items: center;
+  padding: 10px;
+}
+
+/* Стиль для кнопок */
+.header .auth-button,
+.header .logout-button {
+  background-color: #0d3b66; /* Темно-синий цвет */
+  color: white; /* Белый текст */
+  padding: 8px 15px; /* Отступы */
+  border: none; /* Убрать рамку */
+  border-radius: 5px; /* Скругленные углы */
+  font-size: 16px; /* Размер шрифта */
+  cursor: pointer; /* Курсор указателя */
+}
+
+@media (max-width: 768px) {
+  .header .auth-button,
+  .header .logout-button {
+    padding: 5px 10px;
+    font-size: 14px;
+  }
+}
+
+.header .auth-button:hover {
+    background-color: #0056b3;
+}
+
+.header .logout-button:hover {
+    background-color: #0056b3;
+}
+
+.registrationFlink {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.registration-link a {
+    color: #0056b3;
+    text-decoration: none;
+}
+
+.registration-link a:hover {
+    text-decoration: underline;
+}
+
+
+.form-container {
+    display: flex;
+    justify-content: flex-start; /* Выравниваем содержимое сверху */
+    align-items: center;
+    flex-direction: column;
+    height: 96%;
+    padding: 20px;
+    overflow-y: auto; /* Вертикальная прокрутка */
+    margin-top: 60px; /* Добавляем отступ сверху, чтобы избежать наложения */
+}
+
+
+
