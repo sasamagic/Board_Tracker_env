@@ -1,4 +1,4 @@
-# # # # Тут описана модель для хранения полной информации о модулях
+# Тут описана модель для хранения полной информации о модулях
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver

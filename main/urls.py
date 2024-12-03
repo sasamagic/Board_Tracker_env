@@ -11,5 +11,5 @@ urlpatterns = [
     path('registration', views.registration, name='registration'),
     path('new_info_modules', views.new_info_modules, name='new_info_modules'), # для регистрации несуществующего изделия
     path('history_of_registration', views.history_of_registration, name='history_of_registration'), # ИСТОРИЯ РЕГИСТРАЦИИ
-    path('generate-pdf/', views.generate_pdf, name='pdf_dw'),
+    path('generate_pdf', views.generate_pdf, name='generate_pdf'),
 ]

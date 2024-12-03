@@ -2,14 +2,13 @@
 <html lang="ru">
 {% extends 'main/layout.html' %}
 {% block title %}
-    Регистрация модуля
+    Регистрация изделий
 
 {% endblock %}
 
 {% block content %}
 <div class="form-container">
-    <h1>Регистрация модуля</h1>
-
+    <h1>Регистрация изделий</h1>
 {% if messages %}
     {% for message in messages %}
         <p class="success">{{ message }}</p>
@@ -18,7 +17,6 @@
 
     <form method="post">
         {% csrf_token %}
-
             <script>
 document.addEventListener("DOMContentLoaded", function() {
     const ecNumberInput = document.getElementById("ec-number");
@@ -57,8 +55,6 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
-
-
         <div>
             <label for="ec-number">Номер еЦ:</label>
             {{ form.ec_number }}
@@ -81,23 +77,25 @@ document.addEventListener("DOMContentLoaded", function() {
             {{ form.number_of_module }}
         </div>
         <input type="submit" value="Отправить" class="submit-button">
-        <input type="submit" value="Печать этикеток" class="submit-button">
 
-<!--        <a href="{% url 'pdf_dw' %}" target="_blank">-->
-<!--        <button>Сгенерировать PDF</button>-->
-<!--    </a>-->
+
+
+
+<form method="post" action="{% url 'generate_pdf' %}">
+    {% csrf_token %}
+    <div>
+        <label for="ec-number">Номер еЦ:</label>
+        <input type="text" id="ec-number" name="ec_number">
+    </div>
+
+    <input type="submit" name="action" value="Печать этикеток" class="submit-button">
+</form>
+
+
+
 
         <p>Такого изделия не существует? <a href="{% url 'new_info_modules' %}">Зарегистрируйте</a></p>
     </form>
 </div>
 {% endblock %}
-
-
-
-
-
-
-
-
-
 

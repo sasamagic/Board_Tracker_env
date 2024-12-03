@@ -47,7 +47,7 @@
             {% if user.is_authenticated %}
             <a href="{% url 'modules' %}"><li><i class="fas fa-cogs"></i>Регистрация изделий</li></a>
             <a href="{% url 'history_of_registration' %}"><li><i class="fas fa-cogs"></i>История регистрации изделий</li></a>
-            <a href="{% url 'status' %}"><li><i class="fas fa-info-circle"></i>Узнать статус изделий</li></a>
+            <a href="{% url 'status' %}"><li><i class="fas fa-info-circle"></i>Статус изделий</li></a>
             {% else %}
             <a href="{% url 'user' %}"><li><i class="fas fa-lock"></i>Авторизуйтесь для доступа</li></a>
             {% endif %}

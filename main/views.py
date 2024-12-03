@@ -10,13 +10,13 @@ from .models import proverka, poverka, kalibrovka, transportirovka, remont, Seri
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 import datetime
-
-
 from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.graphics.barcode.qr import QrCodeWidget
 from reportlab.graphics.shapes import Drawing
+
+from django.shortcuts import render
 
 def history_of_registration(request):
     if request.method == 'POST':
@@ -176,7 +176,7 @@ def user(request):
                 else:
                     messages.error(request, "Неверный пароль")
             except User.DoesNotExist:
-                messages.error(request, "Пользователь не найден")
+                messages.error(request, "")
         else:
             # Успешная аутентификация
             login(request, user)
@@ -185,44 +185,86 @@ def user(request):
     return render(request, 'main/user.html')  # Отображение формы входа
 
 
-# Генерация файла
+
+# def generate_pdf(request):
+#     # Создаем HTTP-ответ с типом content-type для PDF
+#     response = HttpResponse(content_type='application/pdf')
+#     response['Content-Disposition'] = 'inline; filename="label.pdf"'
+#
+#     # Создаем объект canvas для генерации PDF
+#     p = canvas.Canvas(response, pagesize=letter)
+#     # Устанавливаем начальные координаты для этикетки
+#     start_x, start_y = 10, 750  # Верхний левый угол этикетки
+#
+#     # Добавляем первый QR-код
+#     qr1 = QrCodeWidget("123456789")
+#     qr1_bounds = qr1.getBounds()
+#     qr1_width = qr1_bounds[2] - qr1_bounds[0]
+#     qr1_height = qr1_bounds[3] - qr1_bounds[1]
+#     qr1_drawing = Drawing(60, 60)  # Размер QR-кода
+#     qr1_drawing.add(qr1)
+#     qr1_drawing.drawOn(p, start_x, start_y - 60)
+#
+#     # Добавляем текстовые элементы
+#     text_x = start_x + 70  # Координата X для текста
+#     p.setFont("Helvetica", 10)
+#
+#     # Текст справа от первого QR-кода
+#     p.drawString(text_x, start_y, "KAC")
+#     p.drawString(text_x, start_y - 15, "eЦ6.641.733")
+#
+#     # Текст ниже
+#     p.drawString(start_x, start_y - 100, "pev.4")
+#     p.drawString(start_x + 50, start_y - 100, "№00001")
+#     p.drawString(start_x + 120, start_y - 100, "35/24")
+#
+#     # S/N текст
+#     p.drawString(start_x, start_y - 115, "S/N 01:02:010203:01:3524:00009")
+#
+#     # Завершаем создание PDF
+#     p.showPage()
+#     p.save()
+#     return response
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.graphics.barcode.qr import QrCodeWidget
+from reportlab.graphics.shapes import Drawing
+
 def generate_pdf(request):
-    # Создаем HTTP-ответ с типом content-type для PDF
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename="label.pdf"'
+    if request.method == "POST" and request.POST.get("action") == "Печать этикеток":
+        # Получаем номер еЦ из формы
+        ec_number = request.POST.get('ec_number', 'еЦ_._._-')  # Дефолтное значение, если поле пустое
 
-    # Создаем объект canvas для генерации PDF
-    p = canvas.Canvas(response, pagesize=letter)
+        # Генерируем содержимое QR-кода
+        qr_content = f"Номер еЦ: {ec_number}"
 
-    # Устанавливаем начальные координаты для этикетки
-    start_x, start_y = 10, 750  # Верхний левый угол этикетки
+        # Создаем HTTP-ответ с типом content-type для PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="label.pdf"'
 
-    # Добавляем первый QR-код
-    qr1 = QrCodeWidget("QR Code Content 1")
-    qr1_bounds = qr1.getBounds()
-    qr1_width = qr1_bounds[2] - qr1_bounds[0]
-    qr1_height = qr1_bounds[3] - qr1_bounds[1]
-    qr1_drawing = Drawing(60, 60)  # Размер QR-кода
-    qr1_drawing.add(qr1)
-    qr1_drawing.drawOn(p, start_x, start_y - 60)
+        # Создаем объект canvas для генерации PDF
+        p = canvas.Canvas(response, pagesize=letter)
 
-    # Добавляем текстовые элементы
-    text_x = start_x + 70  # Координата X для текста
-    p.setFont("Helvetica", 10)
+        # Устанавливаем начальные координаты для этикетки
+        start_x, start_y = 10, 750
 
-    # Текст справа от первого QR-кода
-    p.drawString(text_x, start_y, "KAC")
-    p.drawString(text_x, start_y - 15, "eЦ6.641.733")
+        # Добавляем QR-код
+        qr_widget = QrCodeWidget(qr_content)
+        qr_bounds = qr_widget.getBounds()
+        qr_width = qr_bounds[2] - qr_bounds[0]
+        qr_height = qr_bounds[3] - qr_bounds[1]
+        qr_drawing = Drawing(60, 60)  # Размер QR-кода
+        qr_drawing.add(qr_widget)
+        qr_drawing.drawOn(p, start_x, start_y - 60)
 
-    # Текст ниже
-    p.drawString(start_x, start_y - 100, "pev.4")
-    p.drawString(start_x + 50, start_y - 100, "№00001")
-    p.drawString(start_x + 120, start_y - 100, "35/24")
+        # Добавляем текстовые элементы
+        p.setFont("Helvetica", 10)
+        p.drawString(start_x + 70, start_y, f"Номер еЦ: {ec_number}")
 
-    # S/N текст
-    p.drawString(start_x, start_y - 115, "S/N 01:02:010203:01:3524:00009")
+        # Завершаем создание PDF
+        p.showPage()
+        p.save()
+        return response
 
-    # Завершаем создание PDF
-    p.showPage()
-    p.save()
-    return response
+    return HttpResponse("Некорректный запрос", status=400)
