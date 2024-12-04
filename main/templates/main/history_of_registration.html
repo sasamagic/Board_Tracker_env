@@ -1,46 +1,54 @@
+history_of_registration.html:
 {% extends 'main/layout.html' %}
 
-{% block content %}
-    <style>
-        /* Сбросить стили для формы только на этой странице */
-        form {
-            background: none;
-            padding: 0;
-            border: none;
-            box-shadow: none;
-            width: auto;
-            max-width: none;
-            box-sizing: content-box;
-        }
-        .delete-button {
-            margin-left: 15px;
-        }
-        .messages-container {
-            margin-top: 20px;
-        }
-    </style>
+{% block content%}
+<style>
+    form {
+        background: none;
+        padding: 0;
+        border: none;
+        box-shadow: none;
+        width: auto;
+        max-width: none;
+        box-sizing: content-box;
+    }
+    .delete-button {
+        margin-left: 10px;
+    }
+    .messages-container {
+        margin-top: 20px;
+    }
+    .submit-button {
+        margin-left: -550px;
+    }
+</style>
 
-    <div class="form-container">
-        <h2>Список зарегистрированных изделий</h2>
-        <div class="record-list">
-            {% for record in records %}
-                <div class="record-item">
-                    {{ record.combined_field }}
-                    <form method="post" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="delete_id" value="{{ record.id }}">
-                        <button type="submit" class="delete-button">&times;</button>
-                    </form>
-                </div>
-            {% endfor %}
-        </div>
-
-        <div class="messages-container">
-            {% if messages %}
-                {% for message in messages %}
-                    <p class="success">{{ message }}</p>
-                {% endfor %}
-            {% endif %}
-        </div>
+<div class="form-container">
+    <h2>Список зарегистрированных изделий</h2>
+<form id="print-form" method="post" action="{% url 'generate_pdf' %}">
+    {% csrf_token %}
+    <div class="record-list">
+        {% for record in records %}
+            <div class="record-item">
+                <input type="checkbox" id="scales-{{ record.id }}" name="scales[]" value="{{ record.id }}" checked>
+                {{ record.combined_field }}
+                <form method="post" style="display: inline;" id="delete-form-{{ record.id }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="delete_id" value="{{ record.id }}">
+                    <button type="submit" class="delete-button">&times;</button>
+                </form>
+            </div>
+        {% endfor %}
     </div>
+    <input type="submit" value="Печать" class="submit-button">
+</form>
+</div>
+
+<div class="messages-container">
+    {% if messages %}
+        {% for message in messages %}
+            <p class="success">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+</div>
 {% endblock %}

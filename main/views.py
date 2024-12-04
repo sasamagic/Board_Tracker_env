@@ -184,8 +184,6 @@ def user(request):
 
     return render(request, 'main/user.html')  # Отображение формы входа
 
-
-
 # def generate_pdf(request):
 #     # Создаем HTTP-ответ с типом content-type для PDF
 #     response = HttpResponse(content_type='application/pdf')
@@ -225,46 +223,56 @@ def user(request):
 #     p.showPage()
 #     p.save()
 #     return response
-from django.http import HttpResponse
+
+# Список записей
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.graphics.barcode.qr import QrCodeWidget
-from reportlab.graphics.shapes import Drawing
+from io import BytesIO
+from django.shortcuts import render, redirect
+from django.contrib import messages
 
+# Существующий View для отображения страницы
+def records_view(request):
+    if request.method == "POST" and "delete_id" in request.POST:
+        # Логика удаления записи
+        delete_id = request.POST.get("delete_id")
+        # Ваш код для удаления записи с этим ID
+        messages.success(request, "Запись успешно удалена!")
+        return redirect("records_view")
+
+    # Передача списка записей в шаблон
+    records = [{"id": 1, "combined_field": "Пример записи 1"},
+               {"id": 2, "combined_field": "Пример записи 2"}]  # Пример записей
+    return render(request, "records.html", {"records": records})
+
+# Новый View для генерации PDF
 def generate_pdf(request):
-    if request.method == "POST" and request.POST.get("action") == "Печать этикеток":
-        # Получаем номер еЦ из формы
-        ec_number = request.POST.get('ec_number', 'еЦ_._._-')  # Дефолтное значение, если поле пустое
+    if request.method == "POST":
+        selected_ids = request.POST.getlist("scales[]")
+        selected_records = [record for record in get_all_records() if str(record["id"]) in selected_ids]
 
-        # Генерируем содержимое QR-кода
-        qr_content = f"Номер еЦ: {ec_number}"
+        # Генерация PDF
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer)
+        p.drawString(100, 800, "Список выбранных изделий:")
+        y = 750
 
-        # Создаем HTTP-ответ с типом content-type для PDF
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'inline; filename="label.pdf"'
+        for record in selected_records:
+            p.drawString(100, y, record["combined_field"])
+            y -= 20
 
-        # Создаем объект canvas для генерации PDF
-        p = canvas.Canvas(response, pagesize=letter)
-
-        # Устанавливаем начальные координаты для этикетки
-        start_x, start_y = 10, 750
-
-        # Добавляем QR-код
-        qr_widget = QrCodeWidget(qr_content)
-        qr_bounds = qr_widget.getBounds()
-        qr_width = qr_bounds[2] - qr_bounds[0]
-        qr_height = qr_bounds[3] - qr_bounds[1]
-        qr_drawing = Drawing(60, 60)  # Размер QR-кода
-        qr_drawing.add(qr_widget)
-        qr_drawing.drawOn(p, start_x, start_y - 60)
-
-        # Добавляем текстовые элементы
-        p.setFont("Helvetica", 10)
-        p.drawString(start_x + 70, start_y, f"Номер еЦ: {ec_number}")
-
-        # Завершаем создание PDF
-        p.showPage()
         p.save()
+        buffer.seek(0)
+
+        response = HttpResponse(buffer, content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="selected_records.pdf"'
         return response
 
-    return HttpResponse("Некорректный запрос", status=400)
+# Пример функции получения всех записей (замените на вашу логику)
+def get_all_records():
+    return [{"id": 1, "combined_field": "tooo late"},
+            {"id": 2, "combined_field": "Пример записи 2"}]
+
+
+
+
+#

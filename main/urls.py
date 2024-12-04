@@ -1,4 +1,3 @@
-
 from django.urls import path, include #подключили новый метод
 from . import views
 
@@ -9,7 +8,8 @@ urlpatterns = [
     path('status', views.status, name='status'),
     path('logout/', views.logout_view, name='logout'),
     path('registration', views.registration, name='registration'),
-    path('new_info_modules', views.new_info_modules, name='new_info_modules'), # для регистрации несуществующего изделия
-    path('history_of_registration', views.history_of_registration, name='history_of_registration'), # ИСТОРИЯ РЕГИСТРАЦИИ
-    path('generate_pdf', views.generate_pdf, name='generate_pdf'),
+    path('new_info_modules', views.new_info_modules, name='new_info_modules'),
+    path('history_of_registration', views.history_of_registration, name='history_of_registration'),
+    path('generate-pdf/', views.generate_pdf, name='generate_pdf'),
+
 ]

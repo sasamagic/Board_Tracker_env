@@ -24,3 +24,26 @@
     </div>
 {% endblock %}
 
+
+
+
+
+
+<!--<div class="form-container">-->
+<!--    <h2>Список зарегистрированных изделий</h2>-->
+<!--    <h2>_______________________________________</h2>-->
+<!--    <input type="submit" value="Печать" class="submit-button">-->
+<!--    <div class="record-list">-->
+<!--        {% for record in records %}-->
+<!--            <div class="record-item">-->
+<!--                <form method="post" style="display: inline;" id="delete-form-{{ record.id }}">-->
+<!--                    {% csrf_token %}-->
+<!--                        <input type="checkbox" id="scales-{{ record.id }}" name="scales[]" value="{{ record.id }}" checked style="margin-left: -23px;">-->
+<!--                    <input type="hidden" name="delete_id" value="{{ record.id }}">-->
+<!--                </form>-->
+<!--                {{ record.combined_field }}-->
+<!--                <button type="submit" form="delete-form-{{ record.id }}" class="delete-button">&times;</button>-->
+<!--            </div>-->
+<!--        {% endfor %}-->
+<!--    </div>-->
+<!--</div>-->

@@ -78,22 +78,6 @@ document.addEventListener("DOMContentLoaded", function() {
         </div>
         <input type="submit" value="Отправить" class="submit-button">
 
-
-
-
-<form method="post" action="{% url 'generate_pdf' %}">
-    {% csrf_token %}
-    <div>
-        <label for="ec-number">Номер еЦ:</label>
-        <input type="text" id="ec-number" name="ec_number">
-    </div>
-
-    <input type="submit" name="action" value="Печать этикеток" class="submit-button">
-</form>
-
-
-
-
         <p>Такого изделия не существует? <a href="{% url 'new_info_modules' %}">Зарегистрируйте</a></p>
     </form>
 </div>
