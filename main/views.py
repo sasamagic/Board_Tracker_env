@@ -229,26 +229,24 @@ from reportlab.pdfgen import canvas
 from io import BytesIO
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.shortcuts import get_object_or_404
+from .models import Serial_Numbers  # Предполагается, что у вас есть модель Record
 
-# Существующий View для отображения страницы
 def records_view(request):
     if request.method == "POST" and "delete_id" in request.POST:
-        # Логика удаления записи
         delete_id = request.POST.get("delete_id")
-        # Ваш код для удаления записи с этим ID
+        record = get_object_or_404(Serial_Numbers, id=delete_id)
+        record.delete()  # Удаление записи из базы данных
         messages.success(request, "Запись успешно удалена!")
         return redirect("records_view")
 
-    # Передача списка записей в шаблон
-    records = [{"id": 1, "combined_field": "Пример записи 1"},
-               {"id": 2, "combined_field": "Пример записи 2"}]  # Пример записей
-    return render(request, "records.html", {"records": records})
+    records = Serial_Numbers.objects.all()  # Получение всех записей из базы данных
+    return render(request, "main/history_of_registration.html", {"records": records})
 
-# Новый View для генерации PDF
 def generate_pdf(request):
     if request.method == "POST":
         selected_ids = request.POST.getlist("scales[]")
-        selected_records = [record for record in get_all_records() if str(record["id"]) in selected_ids]
+        selected_records = Serial_Numbers.objects.filter(id__in=selected_ids)  # Фильтрация записей по ID
 
         # Генерация PDF
         buffer = BytesIO()
@@ -257,7 +255,7 @@ def generate_pdf(request):
         y = 750
 
         for record in selected_records:
-            p.drawString(100, y, record["combined_field"])
+            p.drawString(100, y, record.combined_field)
             y -= 20
 
         p.save()
@@ -267,12 +265,13 @@ def generate_pdf(request):
         response["Content-Disposition"] = 'attachment; filename="selected_records.pdf"'
         return response
 
-# Пример функции получения всех записей (замените на вашу логику)
-def get_all_records():
-    return [{"id": 1, "combined_field": "tooo late"},
-            {"id": 2, "combined_field": "Пример записи 2"}]
-
-
-
-
-#
+def delete_records(request):
+    if request.method == "POST":
+        selected_ids = request.POST.getlist("scales[]")
+        if selected_ids:
+            # Удаляем записи с выбранными ID
+            Serial_Numbers.objects.filter(id__in=selected_ids).delete()
+            messages.success(request, "Выбранные записи успешно удалены!")
+        else:
+            messages.error(request, "Не выбраны записи для удаления.")
+        return redirect("records_view")

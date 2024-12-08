@@ -1,7 +1,6 @@
-history_of_registration.html:
 {% extends 'main/layout.html' %}
 
-{% block content%}
+{% block content %}
 <style>
     form {
         background: none;
@@ -19,11 +18,12 @@ history_of_registration.html:
         margin-top: 20px;
     }
     .submit-button {
-        margin-left: -550px;
+        margin-left: 0;
     }
 </style>
 
 <div class="form-container">
+
     <h2>Список зарегистрированных изделий</h2>
 <form id="print-form" method="post" action="{% url 'generate_pdf' %}">
     {% csrf_token %}
@@ -32,18 +32,26 @@ history_of_registration.html:
             <div class="record-item">
                 <input type="checkbox" id="scales-{{ record.id }}" name="scales[]" value="{{ record.id }}" checked>
                 {{ record.combined_field }}
-                <form method="post" style="display: inline;" id="delete-form-{{ record.id }}">
-                    {% csrf_token %}
-                    <input type="hidden" name="delete_id" value="{{ record.id }}">
-                    <button type="submit" class="delete-button">&times;</button>
-                </form>
             </div>
         {% endfor %}
     </div>
     <input type="submit" value="Печать" class="submit-button">
 </form>
-</div>
 
+
+    <form id="delete-form" method="post" action="{% url 'delete_records' %}">
+        {% csrf_token %}
+        <div class="record-list">
+            {% for record in records %}
+                <!-- Используем те же чекбоксы -->
+                <input type="hidden" name="scales[]" value="{{ record.id }}">
+            {% endfor %}
+        </div>
+        <input type="submit" value="Удалить" class="submit-button delete-button">
+    </form>
+
+
+</div>
 <div class="messages-container">
     {% if messages %}
         {% for message in messages %}
