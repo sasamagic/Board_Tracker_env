@@ -14,3 +14,5 @@ urlpatterns = [
     path("generate_pdf/", views.generate_pdf, name="generate_pdf"),
     path("delete_records/", views.delete_records, name="delete_records"),
 ]
+
+
