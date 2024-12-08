@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </div>
 
         <div>
-            <label for="modules">Выберите количество модулей:</label>
+            <label for="modules">Выберите количество изделий:</label>
             {{ form.module_count }}
         </div>
         <div>
@@ -69,13 +69,20 @@ document.addEventListener("DOMContentLoaded", function() {
             {{ form.production_date }}
         </div>
         <div>
-            <label for="history">История модуля:</label>
+            <label for="history">История изделия:</label>
             {{ form.history }}
         </div>
         <div>
-            <label for="number-of-module">Номер модуля:</label>
-            {{ form.number_of_module }}
-        </div>
+    <label for="number-of-module">
+        Номер изделия:
+    </label><br>
+    <span style="color: rgba(128, 128, 128, 0.5); font-style: italic;">
+        Примечание: при записи нескольких изделий за один раз запишите в поле "Номер изделия" самый наименьший номер. Важно, чтобы номера были последовательными.
+    </span>
+    {{ form.number_of_module }}
+</div>
+
+
         <input type="submit" value="Отправить" class="submit-button">
 
         <p>Такого изделия не существует? <a href="{% url 'new_info_modules' %}">Зарегистрируйте</a></p>

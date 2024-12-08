@@ -12,11 +12,13 @@ from django.contrib import messages
 import datetime
 from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from reportlab.graphics.barcode.qr import QrCodeWidget
 from reportlab.graphics.shapes import Drawing
-
-from django.shortcuts import render
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 
 def history_of_registration(request):
     if request.method == 'POST':
@@ -76,6 +78,211 @@ def modules (request):
 
 def index(request):
     return render(request,'main/index.html')
+
+def logout_view(request):
+    auth_logout(request)
+    return redirect('home')
+
+# Модель для формы регистрации пользователя
+def registration (request):
+    if request.method == 'POST':
+        form = UserRegisterForm(request.POST) # Создается экземпляр формы UserRegisterForm, и в него передаются данные, полученные из request.POST
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username') # Извлекается имя пользователя (username) из очищенных данных формы
+            return redirect('user')
+    else:
+        form = UserRegisterForm()
+    return render(request, 'main/registration.html', {'form': form})
+
+# Модель для формы входа в аккаунт пользователя
+def user(request):
+    if request.method == 'POST':
+        username_or_email = request.POST['auth_login']
+        password = request.POST['auth_pass']
+
+        # Попробуйте аутентифицировать пользователя по имени пользователя
+        user = authenticate(request, username=username_or_email, password=password)
+
+        if user is None:
+            # Попробуйте найти пользователя по email
+            try:
+                user = User.objects.get(email=username_or_email)
+                if user.check_password(password):
+                    login(request, user)
+                    return redirect('home')  # Перенаправление на главную страницу
+                else:
+                    messages.error(request, "Неверный пароль")
+            except User.DoesNotExist:
+                messages.error(request, "")
+        else:
+            # Успешная аутентификация
+            login(request, user)
+            return redirect('home')  # Перенаправление на главную страницу
+
+    return render(request, 'main/user.html')  # Отображение формы входа
+
+
+def records_view(request):
+    if request.method == "POST" and "delete_id" in request.POST:
+        delete_id = request.POST.get("delete_id")
+        record = get_object_or_404(Serial_Numbers, id=delete_id)
+        record.delete()  # Удаление записи из базы данных
+        messages.success(request, "Запись успешно удалена!")
+        return redirect("records_view")
+
+    records = Serial_Numbers.objects.all()  # Получение всех записей из базы данных
+    return render(request, "main/history_of_registration.html", {"records": records})
+
+
+
+
+
+
+
+# НОВАЯ ЗАПИСЬ ПДФ
+
+def get_module_info(serial_number):
+    """
+    Возвращает информацию о модуле на основе серийного номера.
+    """
+    module_info = None
+    production_date_formatted = None
+    module_number = None
+
+    # Разбиваем серийный номер на части
+    parts = serial_number.split(":")
+    if len(parts) >= 6:
+        try:
+            manufacturer_code = int(parts[1])
+            product_family_code = int(parts[2][:2])
+            product_type_code = int(parts[2][2:])
+            revision_code = int(parts[3])
+            production_date = int(parts[4])  # Неделя + год (3524)
+            module_number = int(parts[5])  # Номер изделия (00009)
+
+            # Преобразование недели и года в формат "месяц.год"
+            year = 2000 + production_date % 100  # Последние две цифры - год
+            week = production_date // 100  # Первые две цифры - неделя
+            first_day_of_year = datetime.date(year, 1, 1)
+            first_week_start = first_day_of_year + datetime.timedelta(days=-first_day_of_year.weekday())
+            production_date_as_date = first_week_start + datetime.timedelta(weeks=week - 1)
+            production_date_formatted = production_date_as_date.strftime("%m.%Y")  # Формат "месяц.год"
+
+            module_info = info_modules.objects.filter(
+                info_manufacturer_code=manufacturer_code,
+                info_product_family_code=product_family_code,
+                info_product_type_code=product_type_code,
+                info_revision_code=revision_code
+            ).first()
+        except (ValueError, info_modules.DoesNotExist):
+            module_info = None
+
+    return {
+        'module_info': module_info,
+        'production_date': production_date_formatted,
+        'module_number': module_number,
+    }
+
+# Регистрация шрифта DejaVuSans
+pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from django.http import HttpResponse
+
+# Регистрация шрифта DejaVuSans
+pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+
+def generate_pdf(request):
+    if request.method == "POST":
+        selected_ids = request.POST.getlist("scales[]")
+        selected_records = Serial_Numbers.objects.filter(id__in=selected_ids)  # Фильтрация записей по ID
+
+        # Генерация данных для PDF
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer)
+
+        # Устанавливаем шрифт DejaVuSans
+        p.setFont("DejaVuSans", 12)
+
+        # Задаем отступы
+        margin_left = 50
+        margin_right = 50
+        margin_top = 50
+        margin_bottom = 50
+
+        # Размеры страницы
+        page_width, page_height = p._pagesize
+
+        # Учитываем верхний отступ для заголовка
+        y = page_height - margin_top
+        line_height = 20  # Расстояние между строками
+
+        # Заголовок
+        p.drawString(margin_left, y, "Список QR-кодов с деталями:")
+        y -= line_height
+
+        for record in selected_records:
+            # Получаем данные о модуле
+            module_data = get_module_info(record.combined_field)
+
+            module_info = module_data['module_info']
+            production_date = module_data['production_date']
+            module_number = module_data['module_number']
+
+            # Формируем строку для вывода
+            module_family = module_info.info_product_family if module_info else "Неизвестное семейство"
+            module_details = (
+                f"Серийный номер: {record.combined_field}, "
+                f"Семейство: {module_family}, "
+                f"Дата производства: {production_date}, "
+                f"Номер изделия: {module_number}"
+            )
+
+            # Проверяем ширину текста для ограничения по ширине
+            text_width = p.stringWidth(module_details, "DejaVuSans", 12)
+            if text_width > page_width - margin_left - margin_right:
+                # Если текст слишком длинный, делим его на строки (грубое деление)
+                words = module_details.split(" ")
+                line = ""
+                for word in words:
+                    if p.stringWidth(line + word, "DejaVuSans", 12) <= page_width - margin_left - margin_right:
+                        line += word + " "
+                    else:
+                        p.drawString(margin_left, y, line.strip())
+                        y -= line_height
+                        line = word + " "
+                if line:
+                    p.drawString(margin_left, y, line.strip())
+                    y -= line_height
+            else:
+                # Если текст помещается, выводим его целиком
+                p.drawString(margin_left, y, module_details)
+                y -= line_height
+
+            # Проверяем, чтобы текст не выходил за нижнюю границу
+            if y < margin_bottom:
+                p.showPage()
+                p.setFont("DejaVuSans", 12)  # Устанавливаем шрифт для новой страницы
+                y = page_height - margin_top
+
+        p.save()
+        buffer.seek(0)
+
+        response = HttpResponse(buffer, content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="detailed_records.pdf"'
+        return response
+
+
+
+
+
+
+
+
 def status(request):
     # Получаем серийный номер из GET-запроса
     serial_number = request.GET.get('serial_number')
@@ -139,132 +346,6 @@ def status(request):
         'module_number': module_number,
         'serial_number': serial_number,  # Чтобы передать введенный серийный номер в шаблон
     })
-
-
-def logout_view(request):
-    auth_logout(request)
-    return redirect('home')
-
-# Модель для формы регистрации пользователя
-def registration (request):
-    if request.method == 'POST':
-        form = UserRegisterForm(request.POST) # Создается экземпляр формы UserRegisterForm, и в него передаются данные, полученные из request.POST
-        if form.is_valid():
-            form.save()
-            username = form.cleaned_data.get('username') # Извлекается имя пользователя (username) из очищенных данных формы
-            return redirect('user')
-    else:
-        form = UserRegisterForm()
-    return render(request, 'main/registration.html', {'form': form})
-
-# Модель для формы входа в аккаунт пользователя
-def user(request):
-    if request.method == 'POST':
-        username_or_email = request.POST['auth_login']
-        password = request.POST['auth_pass']
-
-        # Попробуйте аутентифицировать пользователя по имени пользователя
-        user = authenticate(request, username=username_or_email, password=password)
-
-        if user is None:
-            # Попробуйте найти пользователя по email
-            try:
-                user = User.objects.get(email=username_or_email)
-                if user.check_password(password):
-                    login(request, user)
-                    return redirect('home')  # Перенаправление на главную страницу
-                else:
-                    messages.error(request, "Неверный пароль")
-            except User.DoesNotExist:
-                messages.error(request, "")
-        else:
-            # Успешная аутентификация
-            login(request, user)
-            return redirect('home')  # Перенаправление на главную страницу
-
-    return render(request, 'main/user.html')  # Отображение формы входа
-
-# def generate_pdf(request):
-#     # Создаем HTTP-ответ с типом content-type для PDF
-#     response = HttpResponse(content_type='application/pdf')
-#     response['Content-Disposition'] = 'inline; filename="label.pdf"'
-#
-#     # Создаем объект canvas для генерации PDF
-#     p = canvas.Canvas(response, pagesize=letter)
-#     # Устанавливаем начальные координаты для этикетки
-#     start_x, start_y = 10, 750  # Верхний левый угол этикетки
-#
-#     # Добавляем первый QR-код
-#     qr1 = QrCodeWidget("123456789")
-#     qr1_bounds = qr1.getBounds()
-#     qr1_width = qr1_bounds[2] - qr1_bounds[0]
-#     qr1_height = qr1_bounds[3] - qr1_bounds[1]
-#     qr1_drawing = Drawing(60, 60)  # Размер QR-кода
-#     qr1_drawing.add(qr1)
-#     qr1_drawing.drawOn(p, start_x, start_y - 60)
-#
-#     # Добавляем текстовые элементы
-#     text_x = start_x + 70  # Координата X для текста
-#     p.setFont("Helvetica", 10)
-#
-#     # Текст справа от первого QR-кода
-#     p.drawString(text_x, start_y, "KAC")
-#     p.drawString(text_x, start_y - 15, "eЦ6.641.733")
-#
-#     # Текст ниже
-#     p.drawString(start_x, start_y - 100, "pev.4")
-#     p.drawString(start_x + 50, start_y - 100, "№00001")
-#     p.drawString(start_x + 120, start_y - 100, "35/24")
-#
-#     # S/N текст
-#     p.drawString(start_x, start_y - 115, "S/N 01:02:010203:01:3524:00009")
-#
-#     # Завершаем создание PDF
-#     p.showPage()
-#     p.save()
-#     return response
-
-# Список записей
-from reportlab.pdfgen import canvas
-from io import BytesIO
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.shortcuts import get_object_or_404
-from .models import Serial_Numbers  # Предполагается, что у вас есть модель Record
-
-def records_view(request):
-    if request.method == "POST" and "delete_id" in request.POST:
-        delete_id = request.POST.get("delete_id")
-        record = get_object_or_404(Serial_Numbers, id=delete_id)
-        record.delete()  # Удаление записи из базы данных
-        messages.success(request, "Запись успешно удалена!")
-        return redirect("records_view")
-
-    records = Serial_Numbers.objects.all()  # Получение всех записей из базы данных
-    return render(request, "main/history_of_registration.html", {"records": records})
-
-def generate_pdf(request):
-    if request.method == "POST":
-        selected_ids = request.POST.getlist("scales[]")
-        selected_records = Serial_Numbers.objects.filter(id__in=selected_ids)  # Фильтрация записей по ID
-
-        # Генерация PDF
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer)
-        p.drawString(100, 800, "Список выбранных изделий:")
-        y = 750
-
-        for record in selected_records:
-            p.drawString(100, y, record.combined_field)
-            y -= 20
-
-        p.save()
-        buffer.seek(0)
-
-        response = HttpResponse(buffer, content_type="application/pdf")
-        response["Content-Disposition"] = 'attachment; filename="selected_records.pdf"'
-        return response
-
 def delete_records(request):
     if request.method == "POST":
         selected_ids = request.POST.getlist("scales[]")

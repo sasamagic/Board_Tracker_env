@@ -36,7 +36,6 @@ class Serial_Numbers(models.Model):
     # user = models.ForeignKey(User, on_delete=models.CASCADE)  # РАБОТАЮ С ЭТИМ
     combined_field = models.TextField(verbose_name='Объединенное поле', unique=True, blank=True)
     def str(self):
-        # return f"{self.combined_field} - {self.user}" # РАБОТАЮ С ЭТИМ
         return f"{self.combined_field}"
 
 
