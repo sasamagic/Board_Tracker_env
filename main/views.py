@@ -20,7 +20,7 @@ from io import BytesIO
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.pagesizes import portrait
 from math import ceil
-
+from reportlab.lib.units import mm
 def history_of_registration(request):
     if request.method == 'POST':
         record_id = request.POST.get('delete_id')
@@ -202,7 +202,6 @@ def get_module_info(serial_number):
 # Регистрация шрифта DejaVuSans
 pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
 
-from reportlab.lib.units import mm
 def generate_pdf(request):
     if request.method == "POST":
         selected_ids = request.POST.getlist("scales[]")
@@ -211,25 +210,26 @@ def generate_pdf(request):
         # Генерация данных для PDF
         label_height = 23 * mm  # Высота одной этикетки (включая отступы)
         qr_size = 10 * mm       # Размер QR-кода
-        margin_left = 3 * mm    # Левый отступ
+        margin_left = 4 * mm    # Левый отступ
         column_gap = 5 * mm     # Расстояние между колонками
-        margin_top = 0 * mm     # Верхний отступ
+        margin_top = 35 * mm     # Верхний отступ
 
         # Рассчитываем количество строк и длину страницы
         num_labels = len(selected_records)  # Количество записей
         labels_per_row = 2  # Количество колонок
         num_rows = ceil(num_labels / labels_per_row)  # Считаем количество строк
-        page_height = (num_rows * label_height) + (2 * margin_top)  # Общая длина страницы
+        # page_height = (num_rows * label_height) + (2 * margin_top)  # Общая длина страницы
+        page_height = max(num_rows * label_height, 100 * mm)
         page_width = 85 * mm  # Фиксированная ширина страницы (ширина бабины)
 
         buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=(page_width, page_height))
+        p = canvas.Canvas(buffer, pagesize=portrait((page_width, page_height)))
 
         # Устанавливаем шрифт DejaVuSans
-        p.setFont("DejaVuSans", 5.5)
+        p.setFont("DejaVuSans", 5)
 
         # Начальная позиция
-        y = page_height - margin_top
+        y = page_height - margin_top + 30 * mm
         line_spacing = 2 * mm
         x_offsets = [margin_left, margin_left + (page_width - 2 * margin_left - column_gap) / 2 + column_gap]
 
@@ -276,7 +276,7 @@ def generate_pdf(request):
             p.drawString(x + 0.9 * mm, y - qr_size - 1 * mm, f"S/N {record.combined_field}")
 
             # Отрисовка revision_code и production_date
-            rightmost_x = text_x_offset + 18 * mm
+            rightmost_x = text_x_offset + 16 * mm
             p.drawString(rightmost_x, y - 2.3 * mm, f"rev.{revision_code}")
             p.drawString(rightmost_x, y - 2.3 * mm - line_spacing, production_date)
 

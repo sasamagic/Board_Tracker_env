@@ -1,10 +1,18 @@
+
 {% extends 'main/layout.html' %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
     <div class="form-container">
         <form method="get" action="{% url 'status' %}" onsubmit="removeSpaces()">
             <label for="serial-number">Отсканируйте QR код или введите серийный номер:</label>
-            <input type="text" id="serial-number" name="serial_number" value="{{ serial_number|default_if_none:'' }}" required autofocus>
+            <input type="text"
+                   id="serial-number"
+                   name="serial_number"
+                   maxlength="27"
+                   oninput="enforceMaxLength(this)"
+                   value="{{ serial_number|default_if_none:'' }}"
+                   required
+                   autofocus>
             <button type="submit" class="submit-button">Отправить</button>
         </form><br><br>
 
@@ -35,11 +43,11 @@
                         </tr>
                         <tr>
                             <td style="padding-right: 20px;">Дата производства:</td>
-                            <td>{{ production_date  }}</td>
+                            <td>{{ production_date }}</td>
                         </tr>
                         <tr>
                             <td style="padding-right: 20px;">Номер изделия:</td>
-                            <td>{{ module_number  }}</td>
+                            <td>{{ module_number }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -48,4 +56,19 @@
             <p>Информация о модуле отсутствует</p>
         {% endif %}
     </div>
+
+    <script>
+        // Ограничение длины текста до 27 символов
+        function enforceMaxLength(element) {
+            if (element.value.length > 27) {
+                element.value = element.value.slice(0, 27); // Обрезаем текст до 27 символов
+            }
+        }
+
+        // Удаление пробелов перед отправкой формы
+        function removeSpaces() {
+            const input = document.getElementById('serial-number');
+            input.value = input.value.trim(); // Убираем пробелы в начале и конце строки
+        }
+    </script>
 {% endblock %}
