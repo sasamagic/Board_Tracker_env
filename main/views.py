@@ -1,15 +1,13 @@
 from django.contrib.auth import logout as auth_logout
 from database.models import Modules
 from .models import info_modules
-from .forms import regForm, Serial_NumbersForm
-from .forms import info_modulesForm
-from .forms import UserRegisterForm
+from .forms import regForm, Serial_NumbersForm, info_modulesForm,UserRegisterForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from .models import proverka, poverka, kalibrovka, transportirovka, remont, Serial_Numbers
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
-import datetime
+import datetime, qrcode
 from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.graphics.barcode.qr import QrCodeWidget
@@ -19,8 +17,10 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from io import BytesIO
-import qrcode
 from reportlab.lib.utils import ImageReader
+from reportlab.lib.pagesizes import portrait
+from math import ceil
+
 def history_of_registration(request):
     if request.method == 'POST':
         record_id = request.POST.get('delete_id')
@@ -123,7 +123,6 @@ def user(request):
 
     return render(request, 'main/user.html')  # Отображение формы входа
 
-
 def records_view(request):
     if request.method == "POST" and "delete_id" in request.POST:
         delete_id = request.POST.get("delete_id")
@@ -134,21 +133,6 @@ def records_view(request):
 
     records = Serial_Numbers.objects.all()  # Получение всех записей из базы данных
     return render(request, "main/history_of_registration.html", {"records": records})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# НОВАЯ ЗАПИСЬ ПДФ
 
 def get_module_info(serial_number):
     """
@@ -218,32 +202,38 @@ def get_module_info(serial_number):
 # Регистрация шрифта DejaVuSans
 pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
 
+from reportlab.lib.units import mm
 def generate_pdf(request):
     if request.method == "POST":
         selected_ids = request.POST.getlist("scales[]")
         selected_records = Serial_Numbers.objects.filter(id__in=selected_ids)  # Фильтрация записей по ID
 
         # Генерация данных для PDF
+        label_height = 23 * mm  # Высота одной этикетки (включая отступы)
+        qr_size = 10 * mm       # Размер QR-кода
+        margin_left = 3 * mm    # Левый отступ
+        column_gap = 5 * mm     # Расстояние между колонками
+        margin_top = 0 * mm     # Верхний отступ
+
+        # Рассчитываем количество строк и длину страницы
+        num_labels = len(selected_records)  # Количество записей
+        labels_per_row = 2  # Количество колонок
+        num_rows = ceil(num_labels / labels_per_row)  # Считаем количество строк
+        page_height = (num_rows * label_height) + (2 * margin_top)  # Общая длина страницы
+        page_width = 85 * mm  # Фиксированная ширина страницы (ширина бабины)
+
         buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=letter)
+        p = canvas.Canvas(buffer, pagesize=(page_width, page_height))
 
         # Устанавливаем шрифт DejaVuSans
-        p.setFont("DejaVuSans", 12)
+        p.setFont("DejaVuSans", 5.5)
 
-        # Задаем отступы
-        margin_left = 50
-        margin_top = 50
-        margin_bottom = 50
-
-        # Размеры страницы
-        page_width, page_height = p._pagesize
-
-        # Учитываем верхний отступ для заголовка
+        # Начальная позиция
         y = page_height - margin_top
-        line_height = 20  # Расстояние между строками
-        y -= line_height
+        line_spacing = 2 * mm
+        x_offsets = [margin_left, margin_left + (page_width - 2 * margin_left - column_gap) / 2 + column_gap]
 
-        qr_size = 100  # Размер QR-кода (в пикселях)
+        column_index = 0  # Текущая колонка
 
         for record in selected_records:
             # Получаем данные о модуле
@@ -255,17 +245,6 @@ def generate_pdf(request):
             revision_code = module_data['revision_code']
             module_number = module_data['module_number']
 
-            # Формируем строку для вывода
-            module_details = (
-                f"S/N: {record.combined_field}, "
-                f"{info_product_type}, "
-                f"еЦ: {info_ec_number}, "
-                f"{production_date}, "
-                f"rev.{revision_code}, "
-                f"№{module_number}"
-            )
-
-            # Создание QR-кода
             # Создание QR-кода
             qr_data = [
                 record.combined_field,  # Серийный номер
@@ -274,8 +253,6 @@ def generate_pdf(request):
                 production_date,  # Дата производства
                 revision_code,  # Код ревизии
             ]
-
-            # Формируем строку для QR-кода: значения через запятую
             qr_text = ",".join(map(str, qr_data))  # Преобразуем все значения в строку
             qr = qrcode.make(qr_text)
 
@@ -285,18 +262,29 @@ def generate_pdf(request):
             qr_buffer.seek(0)
             qr_image = ImageReader(qr_buffer)
 
-            # Отрисовка QR-кода в PDF
-            p.drawImage(qr_image, margin_left, y - qr_size, width=qr_size, height=qr_size)
+            # Координаты текущей колонки
+            x = x_offsets[column_index]
 
-            # Отрисовка текста рядом с QR-кодом
-            p.drawString(margin_left + qr_size + 10, y - 10, module_details)
-            y -= qr_size + line_height
+            # Отрисовка QR-кода
+            p.drawImage(qr_image, x, y - qr_size, width=qr_size, height=qr_size)
 
-            # Проверяем, чтобы текст не выходил за нижнюю границу
-            if y < margin_bottom + qr_size:
-                p.showPage()
-                p.setFont("DejaVuSans", 12)  # Устанавливаем шрифт для новой страницы
-                y = page_height - margin_top
+            # Отрисовка текста
+            text_x_offset = x + qr_size + 0.5 * mm  # Смещение для текста справа от QR
+            p.drawString(text_x_offset, y - 2.5 * mm, info_product_type)
+            p.drawString(text_x_offset, y - 3 * mm - line_spacing, info_ec_number)
+            p.drawString(text_x_offset, y - 3.5 * mm - 2 * line_spacing, f"№{module_number}")
+            p.drawString(x + 0.9 * mm, y - qr_size - 1 * mm, f"S/N {record.combined_field}")
+
+            # Отрисовка revision_code и production_date
+            rightmost_x = text_x_offset + 18 * mm
+            p.drawString(rightmost_x, y - 2.3 * mm, f"rev.{revision_code}")
+            p.drawString(rightmost_x, y - 2.3 * mm - line_spacing, production_date)
+
+            # Переход к следующей колонке
+            column_index += 1
+            if column_index >= labels_per_row:  # Если колонки закончились, переходим на новую строку
+                column_index = 0
+                y -= label_height
 
         p.save()
         buffer.seek(0)
@@ -304,28 +292,6 @@ def generate_pdf(request):
         response = HttpResponse(buffer, content_type="application/pdf")
         response["Content-Disposition"] = 'attachment; filename="detailed_records_with_qr.pdf"'
         return response
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 def status(request):
     # Получаем серийный номер из GET-запроса

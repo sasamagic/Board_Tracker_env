@@ -36,6 +36,14 @@
     <h2>Список зарегистрированных изделий</h2>
     <form id="main-form" method="post">
         {% csrf_token %}
+
+        <div class="button-container">
+            <!-- Кнопка для печати -->
+            <button type="submit" formaction="{% url 'generate_pdf' %}" class="submit-button">Печать</button>
+            <!-- Кнопка для удаления -->
+            <button type="submit" formaction="{% url 'delete_records' %}" class="submit-button">Удалить</button>
+        </div>
+
         <div class="record-list">
             {% for record in records %}
                 <div class="record-item">
@@ -43,13 +51,6 @@
                     {{ record.combined_field }}
                 </div>
             {% endfor %}
-        </div>
-
-        <div class="button-container">
-            <!-- Кнопка для печати -->
-            <button type="submit" formaction="{% url 'generate_pdf' %}" class="submit-button">Печать</button>
-            <!-- Кнопка для удаления -->
-            <button type="submit" formaction="{% url 'delete_records' %}" class="submit-button">Удалить</button>
         </div>
     </form>
 </div>
