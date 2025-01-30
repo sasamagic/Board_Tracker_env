@@ -12,7 +12,8 @@
                    oninput="enforceMaxLength(this)"
                    value="{{ serial_number|default_if_none:'' }}"
                    required
-                   autofocus>
+                   autofocus
+                    size="30">
             <button type="submit" class="submit-button">Отправить</button>
         </form><br><br>
 
@@ -42,8 +43,13 @@
                             <td>{{ module_info.info_ec_number }}</td>
                         </tr>
                         <tr>
-                            <td style="padding-right: 20px;">Дата производства:</td>
+                            <td style="padding-right: 20px;">Дата производства (мес. + год):</td>
                             <td>{{ production_date }}</td>
+                        </tr>
+                        <tr>
+                            <tr>
+                            <td style="padding-right: 20px;">Дата производства (нед. + год):</td>
+                            <td>{{ production_date_2 }}</td>
                         </tr>
                         <tr>
                             <td style="padding-right: 20px;">Номер изделия:</td>

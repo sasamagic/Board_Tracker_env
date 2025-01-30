@@ -1,3 +1,6 @@
+import os
+
+import reportlab
 from django.contrib.auth import logout as auth_logout
 from database.models import Modules
 from .models import info_modules
@@ -305,6 +308,7 @@ def status(request):
 
     # Определяем переменные заранее, чтобы избежать ошибки
     production_date_formatted = None
+    production_date_formatted_2 = None
     module_number = None
 
     if serial_number:  # Проверяем, если серийный номер введен
@@ -325,7 +329,8 @@ def status(request):
                 first_day_of_year = datetime.date(year, 1, 1)
                 first_week_start = first_day_of_year + datetime.timedelta(days=-first_day_of_year.weekday())
                 production_date_as_date = first_week_start + datetime.timedelta(weeks=week - 1)
-                production_date_formatted = production_date_as_date.strftime("%m.%Y")  # Формат "месяц.год"
+                production_date_formatted = production_date_as_date.strftime("%m / %Y")  # Формат "месяц.год"
+                production_date_formatted_2 = production_date_as_date.strftime("%V / %Y")  # Формат "месяц.год"
 
                 module_info = info_modules.objects.filter(
                     info_manufacturer_code=manufacturer_code,
@@ -353,6 +358,7 @@ def status(request):
         'tasks5': tasks5,
         'tasks6': tasks6,
         'production_date': production_date_formatted,
+        'production_date_2': production_date_formatted_2,
         'module_number': module_number,
         'serial_number': serial_number,  # Чтобы передать введенный серийный номер в шаблон
     })
